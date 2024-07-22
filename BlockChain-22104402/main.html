@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Banking App</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.2.7-rc.0/web3.min.js"></script>
+    <style>
+       body {
+            background-image: url(images/BC10.jpg);
+            background-size: cover;
+            background-repeat: no-repeat;
+            font-family: tahoma;
+            font-size: 33px;
+        }
+        button {
+            margin-left: 50px;
+            background-color: skyblue;
+            font-size: 30px;
+            padding: 5px;
+            font-family:'Times New Roman', Times, serif;
+            border-radius: 30%;
+        }
+        input {
+            margin-left: 50px;
+            width: 25vw;
+            height: 30px;
+            font-size: 25px;
+            font-family: tahoma;
+            outline:auto;
+            border-radius: 15%;
+        }
+        #readArea {
+            flex-basis: 50%;
+        }
+        #writeArea {
+            flex-basis: 50%;
+        }
+        button:hover {
+            background-color: whitesmoke;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <div id="readArea"> <!-- READING FROM CONTRACT -->
+        <button onclick="connectMetamask()">Connect to MetaMask</button>
+        <p id="userArea" style="color: aliceblue;margin-left: 50px;font-size: 50%";>Status: Not connected to Metamask</p>
+         <!-- index html to meta-->
+
+        <button onclick="connectContract()">Connect to Contract</button>
+        <p id="contractArea" style="color: aliceblue;margin-left: 50px;font-size: 50%";>Status: Not connected to Contract</p>
+        <!-- meta to SC -->
+
+        <button onclick="getContractAccount()"> Get Contract Account </button>
+        <p id="contractAccount" style="color: aliceblue;margin-left: 50px;font-size: 50%";>Contract Account: Not Connected to Contract</p>
+        <!-- CAlling the function designed in Transactions.sol get deployment addresss -->
+
+        <button onclick="getBalanceApple()">Get balance of the Contract</button>
+        <p id="balanceArea" style="color: aliceblue;margin-left: 50px;font-size: 50%";>Balance: Not Connected to Contract</p>
+        <!-- CAlling the function designed in Transactions.sol get balance -->
+
+        
+    </div>
+
+    <div id="writeArea"><!-- WRITING TO CONTRACT -->
+        <button style="margin-bottom: 1%;" onclick="depositContract()">Send ether to the Contract</button><br>
+        <input style="font-size: 50%;" type="number" id="depositInput" placeholder="Enter Amount"><br> <br>
+          <!-- Deposit to contract calling on deposit function -->
+
+        <button style="margin-bottom: 1%;" onclick="withdraw()">Withdraw ether to any Address</button> <br>
+        <input style="font-size: 50%;" type="text" id="addressInput" placeholder="Enter Address"> <br>
+        <input style="font-size: 50%;" type="number" id="amountInput" placeholder="Enter Amount"> 
+                <!-- CAlling the function designed in Transactions.sol -->
+        <!-- calling the withdraw function -->
+    </div>
+
+    <script> // the below script code is convention in web3 in forming the communication with Web
+
+        let account;
+        const connectMetamask = async () => {
+            if(window.ethereum !== "undefined") {
+                const accounts = await ethereum.request({method: "eth_requestAccounts"});
+                account = accounts[0];
+                document.getElementById("userArea").innerHTML = `User Account: ${account}`;
+            }
+        }
+
+        const connectContract = async () => {
+            const ABI = 
+            [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "Deposit",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "Withdrawal",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "deposit",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address payable",
+				"name": "_to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]
+            const Address = "0xeD8b59D9e2e34Fc0AE2f5C1aF019c106832033E0"; // Taking Address from Remix 
+            window.web3 = await new Web3(window.ethereum);
+            window.contract = await new window.web3.eth.Contract(ABI, Address);
+            document.getElementById("contractArea").innerHTML = "Connected to Contract"; // calling the elementID above
+        }
+
+        const getContractAccount = async () => {
+            const data = await window.contract.methods.getAddress().call();
+            document.getElementById("contractAccount").innerHTML = `Contract Account: ${data}`;
+        }
+
+        const getBalanceApple = async () => { // const getBalanceApple is the HTML function & .contract.getBalance is the smart contract function
+            const data = await window.contract.methods.getBalance().call();
+            document.getElementById("balanceArea").innerHTML = `Contract Balance: ${data}`;
+        }
+
+        const depositContract = async () => {
+            const amount = document.getElementById("depositInput").value;
+            await window.contract.methods.deposit().send({from: account, value: amount});
+        }
+
+        const withdraw = async () => {
+            const amount = document.getElementById("amountInput").value;
+            const address = document.getElementById("addressInput").value;
+            await window.contract.methods.withdraw(address, amount).send({from: account});
+        }
+
+    </script>
+   
+</body>
+</html>
